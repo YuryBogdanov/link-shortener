@@ -46,7 +46,7 @@ func makeAndStoreShortURL(url string) string {
 	}
 }
 
-func getShortenedLink(r http.Request, linkId string) string {
+func getShortenedLink(r *http.Request, linkId string) string {
 	return "http://" + r.Host + "/" + linkId
 }
 
