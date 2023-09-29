@@ -15,8 +15,8 @@ func processShortURLRequest(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			panic(err)
 		} else {
-			linkId := makeAndStoreShortURL(string(url))
-			resultLink := getShortenedLink(r, linkId)
+			linkID := makeAndStoreShortURL(string(url))
+			resultLink := getShortenedLink(r, linkID)
 			w.WriteHeader(http.StatusCreated)
 			w.Write([]byte(resultLink))
 		}
@@ -46,8 +46,8 @@ func makeAndStoreShortURL(url string) string {
 	}
 }
 
-func getShortenedLink(r *http.Request, linkId string) string {
-	return "http://" + r.Host + "/" + linkId
+func getShortenedLink(r *http.Request, linkID string) string {
+	return "http://" + r.Host + "/" + linkID
 }
 
 func handleError(w http.ResponseWriter) {
