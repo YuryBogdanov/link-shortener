@@ -20,7 +20,11 @@ func processShortURLRequest(w http.ResponseWriter, r *http.Request) {
 
 func handleNewLinkRegistration(w http.ResponseWriter, r *http.Request) {
 	if url, err := io.ReadAll(r.Body); err == nil {
-		linkID := makeAndStoreShortURL(string(url))
+		linkID, err := makeAndStoreShortURL(string(url))
+		if err != nil {
+			handleError(w)
+			return
+		}
 		resultLink := getShortenedLink(r, linkID)
 		w.WriteHeader(http.StatusCreated)
 		w.Write([]byte(resultLink))
@@ -48,7 +52,6 @@ func handleError(w http.ResponseWriter) {
 }
 
 func main() {
-	links = make(map[string]string)
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/", processShortURLRequest)
