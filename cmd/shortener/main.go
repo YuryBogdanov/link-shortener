@@ -1,48 +1,41 @@
 package main
 
 import (
-	"crypto/md5"
-	"fmt"
 	"io"
 	"net/http"
 )
 
-var links map[string]string
-
 func processShortURLRequest(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPost {
-		url, err := io.ReadAll(r.Body)
-		if err != nil {
-			panic(err)
-		} else {
-			linkID := makeAndStoreShortURL(string(url))
-			resultLink := getShortenedLink(r, linkID)
-			w.WriteHeader(http.StatusCreated)
-			w.Write([]byte(resultLink))
-		}
-	} else if r.Method == http.MethodGet {
-		query := r.URL.Path[1:]
-		if link, exists := links[query]; exists {
-			w.Header().Add("Location", link)
-			w.WriteHeader(http.StatusTemporaryRedirect)
-		} else {
-			handleError(w)
-		}
+	switch r.Method {
+	case http.MethodPost:
+		handleNewLinkRegistration(w, r)
+
+	case http.MethodGet:
+		handleExistingLinkRequest(w, r)
+
+	default:
+		handleError(w)
+	}
+}
+
+func handleNewLinkRegistration(w http.ResponseWriter, r *http.Request) {
+	if url, err := io.ReadAll(r.Body); err != nil {
+		linkID := makeAndStoreShortURL(string(url))
+		resultLink := getShortenedLink(r, linkID)
+		w.WriteHeader(http.StatusCreated)
+		w.Write([]byte(resultLink))
 	} else {
 		handleError(w)
 	}
 }
 
-func makeAndStoreShortURL(url string) string {
-	hash := md5.New()
-	io.WriteString(hash, url)
-	encodedString := fmt.Sprintf("%x", hash.Sum(nil))
-	if len([]rune(encodedString)) < 8 {
-		links[encodedString] = url
-		return encodedString
+func handleExistingLinkRequest(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Path[1:]
+	if link, exists := links[query]; exists {
+		w.Header().Add("Location", link)
+		w.WriteHeader(http.StatusTemporaryRedirect)
 	} else {
-		links[encodedString[:8]] = url
-		return encodedString[:8]
+		handleError(w)
 	}
 }
 
