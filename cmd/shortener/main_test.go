@@ -100,7 +100,7 @@ func Test_handleExistingLinkRequest(t *testing.T) {
 			},
 		},
 		{
-			"Nrgative case #2",
+			"Negative case #2",
 			"",
 			want{
 				400,

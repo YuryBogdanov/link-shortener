@@ -7,12 +7,12 @@ import (
 	"io"
 )
 
-const MAX_LINK_ID_LENGTH = 8
+const MaxLinkIDLength = 8
 
 var (
 	links                        map[string]string
-	ErrEmptyLinkError            = errors.New("The link is empty")
-	ErrLinkContainsJustURLScheme = errors.New("The link contains only URL scheme")
+	ErrEmptyLinkError            = errors.New("the link is empty")
+	ErrLinkContainsJustURLScheme = errors.New("the link contains only URL scheme")
 )
 
 func makeAndStoreShortURL(url string) (string, error) {
@@ -26,12 +26,12 @@ func makeAndStoreShortURL(url string) (string, error) {
 	hash := md5.New()
 	io.WriteString(hash, url)
 	encodedString := fmt.Sprintf("%x", hash.Sum(nil))
-	if len([]rune(encodedString)) < MAX_LINK_ID_LENGTH {
+	if len([]rune(encodedString)) < MaxLinkIDLength {
 		links[encodedString] = url
 		return encodedString, nil
 	} else {
-		links[encodedString[:MAX_LINK_ID_LENGTH]] = url
-		return encodedString[:MAX_LINK_ID_LENGTH], nil
+		links[encodedString[:MaxLinkIDLength]] = url
+		return encodedString[:MaxLinkIDLength], nil
 	}
 }
 
