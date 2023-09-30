@@ -72,3 +72,56 @@ func Test_handleNewLinkRegistration(t *testing.T) {
 		})
 	}
 }
+
+func Test_handleExistingLinkRequest(t *testing.T) {
+	type want struct {
+		code     int
+		location string
+	}
+	tests := []struct {
+		name string
+		id   string
+		want want
+	}{
+		{
+			"Positive case #1",
+			"6bdb5b0e",
+			want{
+				307,
+				"https://practicum.yandex.ru",
+			},
+		},
+		{
+			"Negative case #1",
+			"invalid",
+			want{
+				400,
+				"",
+			},
+		},
+		{
+			"Nrgative case #2",
+			"",
+			want{
+				400,
+				"",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if len(tt.id) != 0 && len(tt.want.location) != 0 {
+				links = make(map[string]string)
+				links[tt.id] = tt.want.location
+			}
+			request := httptest.NewRequest(http.MethodGet, "/"+tt.id, nil)
+			w := httptest.NewRecorder()
+			handleExistingLinkRequest(w, request)
+
+			result := w.Result()
+
+			assert.Equal(t, tt.want.code, result.StatusCode)
+			assert.Equal(t, tt.want.location, result.Header.Get("Location"))
+		})
+	}
+}
