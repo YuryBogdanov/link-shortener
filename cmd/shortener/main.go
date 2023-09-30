@@ -19,7 +19,7 @@ func processShortURLRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleNewLinkRegistration(w http.ResponseWriter, r *http.Request) {
-	if url, err := io.ReadAll(r.Body); err != nil {
+	if url, err := io.ReadAll(r.Body); err == nil {
 		linkID := makeAndStoreShortURL(string(url))
 		resultLink := getShortenedLink(r, linkID)
 		w.WriteHeader(http.StatusCreated)
