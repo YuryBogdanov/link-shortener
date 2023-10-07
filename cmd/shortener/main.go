@@ -7,18 +7,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func processShortURLRequest(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodPost:
-		handleNewLinkRegistration(w, r)
-
-	case http.MethodGet:
-		handleExistingLinkRequest(w, r)
-
-	default:
-		handleError(w)
-	}
-}
+const urlParameterShortenedID = "id"
 
 func handleNewLinkRegistration(w http.ResponseWriter, r *http.Request) {
 	if url, err := io.ReadAll(r.Body); err == nil {
@@ -37,6 +26,7 @@ func handleNewLinkRegistration(w http.ResponseWriter, r *http.Request) {
 
 func handleExistingLinkRequest(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Path[1:]
+	// query := chi.URLParam(r, urlParameterShortenedID)
 	if link, exists := links[query]; exists {
 		w.Header().Add("Location", link)
 		w.WriteHeader(http.StatusTemporaryRedirect)
@@ -55,7 +45,7 @@ func handleError(w http.ResponseWriter) {
 
 func main() {
 	router := chi.NewRouter()
-	router.Get("/", handleExistingLinkRequest)
+	router.Get("/{id}", handleExistingLinkRequest)
 	router.Post("/", handleNewLinkRegistration)
 
 	err := http.ListenAndServe(":8080", router)
