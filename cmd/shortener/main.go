@@ -3,6 +3,8 @@ package main
 import (
 	"io"
 	"net/http"
+
+	"github.com/go-chi/chi/v5"
 )
 
 func processShortURLRequest(w http.ResponseWriter, r *http.Request) {
@@ -52,11 +54,11 @@ func handleError(w http.ResponseWriter) {
 }
 
 func main() {
-	mux := http.NewServeMux()
+	router := chi.NewRouter()
+	router.Get("/", handleExistingLinkRequest)
+	router.Post("/", handleNewLinkRegistration)
 
-	mux.HandleFunc("/", processShortURLRequest)
-
-	err := http.ListenAndServe(":8080", mux)
+	err := http.ListenAndServe(":8080", router)
 	if err != nil {
 		panic(err)
 	}
