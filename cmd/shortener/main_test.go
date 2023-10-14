@@ -111,7 +111,7 @@ func Test_handleExistingLinkRequest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if len(tt.id) != 0 && len(tt.want.location) != 0 {
-				links = make(map[string]string)
+				// links = make(map[string]string)
 				links[tt.id] = tt.want.location
 			}
 			request := httptest.NewRequest(http.MethodGet, "/"+tt.id, nil)
