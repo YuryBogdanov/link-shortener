@@ -15,12 +15,12 @@ var BaseConfig Config = Config{
 	Option{
 		"Server Path",
 		"a",
-		"localhost:8080",
+		"example.com",
 	},
 	Option{
 		"Output link host",
 		"b",
-		"http://localhost:8080",
+		"https://example.com",
 	},
 }
 
