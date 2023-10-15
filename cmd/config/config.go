@@ -20,7 +20,7 @@ var BaseConfig Config = Config{
 	Option{
 		"Output link host",
 		"b",
-		"https://example.com",
+		"http://example.com",
 	},
 }
 
