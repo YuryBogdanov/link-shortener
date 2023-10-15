@@ -48,7 +48,8 @@ func main() {
 	router.Get("/{id}", handleExistingLinkRequest)
 	router.Post("/", handleNewLinkRegistration)
 
-	err := http.ListenAndServe(":8080", router)
+	baseURL := config.BaseConfig.ServerPath.Value
+	err := http.ListenAndServe(baseURL, router)
 	if err != nil {
 		panic(err)
 	}

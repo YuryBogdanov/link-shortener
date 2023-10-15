@@ -25,7 +25,7 @@ func Test_handleNewLinkRegistration(t *testing.T) {
 			"https://practicum.yandex.ru",
 			want{
 				201,
-				"http://example.com/6bdb5b0e",
+				"http://localhost:8080/6bdb5b0e",
 			},
 		},
 		{
@@ -33,7 +33,7 @@ func Test_handleNewLinkRegistration(t *testing.T) {
 			"https://go.dev",
 			want{
 				201,
-				"http://example.com/1dd1701d",
+				"http://localhost:8080/1dd1701d",
 			},
 		},
 		{
