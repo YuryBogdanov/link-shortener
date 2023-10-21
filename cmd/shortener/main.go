@@ -2,6 +2,7 @@ package main
 
 import (
 	"io"
+	"log"
 	"net/http"
 
 	"github.com/YuryBogdanov/link-shortener/cmd/config"
@@ -51,6 +52,6 @@ func main() {
 	baseURL := config.BaseConfig.ServerPath.Value
 	err := http.ListenAndServe(baseURL, router)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }
