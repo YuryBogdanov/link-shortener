@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/YuryBogdanov/link-shortener/internal/handler"
+	"github.com/YuryBogdanov/link-shortener/internal/storage"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -58,7 +60,7 @@ func Test_handleNewLinkRegistration(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(tt.link)))
 			w := httptest.NewRecorder()
 
-			handleNewLinkRegistration(w, request)
+			handler.HandleNewLinkRegistration(w, request)
 
 			result := w.Result()
 			assert.Equal(t, tt.want.code, result.StatusCode)
@@ -111,12 +113,12 @@ func Test_handleExistingLinkRequest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if len(tt.id) != 0 && len(tt.want.location) != 0 {
-				links = make(map[string]string)
-				links[tt.id] = tt.want.location
+				storage.Links = make(map[string]string)
+				storage.Links[tt.id] = tt.want.location
 			}
 			request := httptest.NewRequest(http.MethodGet, "/"+tt.id, nil)
 			w := httptest.NewRecorder()
-			handleExistingLinkRequest(w, request)
+			handler.HandleExistingLinkRequest(w, request)
 
 			result := w.Result()
 			defer result.Body.Close()
