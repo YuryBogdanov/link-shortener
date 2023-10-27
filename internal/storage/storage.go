@@ -5,12 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sync"
 )
 
 const MaxLinkIDLength = 8
 
 var (
 	Links                        map[string]string
+	lock                         = sync.RWMutex{}
 	ErrEmptyLinkError            = errors.New("the link is empty")
 	ErrLinkContainsJustURLScheme = errors.New("the link contains only URL scheme")
 )
@@ -27,10 +29,10 @@ func MakeAndStoreShortURL(url string) (string, error) {
 	io.WriteString(hash, url)
 	encodedString := fmt.Sprintf("%x", hash.Sum(nil))
 	if len([]rune(encodedString)) < MaxLinkIDLength {
-		Links[encodedString] = url
+		setLinkForKey(encodedString, url)
 		return encodedString, nil
 	} else {
-		Links[encodedString[:MaxLinkIDLength]] = url
+		setLinkForKey(encodedString[:MaxLinkIDLength], url)
 		return encodedString[:MaxLinkIDLength], nil
 	}
 }
@@ -43,4 +45,18 @@ func validateURL(url string) error {
 		return ErrLinkContainsJustURLScheme
 	}
 	return nil
+}
+
+func setLinkForKey(key string, link string) {
+	lock.Lock()
+	Links[key] = link
+	lock.Unlock()
+}
+
+func GetLinkForKey(key string) (string, error) {
+	var linkToReturn string
+	lock.RLock()
+	linkToReturn = Links[key]
+	lock.RUnlock()
+	return linkToReturn, nil
 }
