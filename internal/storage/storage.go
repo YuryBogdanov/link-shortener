@@ -58,5 +58,9 @@ func GetLinkForKey(key string) (string, error) {
 	lock.RLock()
 	linkToReturn = Links[key]
 	lock.RUnlock()
-	return linkToReturn, nil
+	if err := validateURL(linkToReturn); err != nil {
+		return "", err
+	} else {
+		return linkToReturn, nil
+	}
 }
