@@ -23,24 +23,6 @@ func HandleNewLinkRegistration(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func HandleExistingLinkRequest(w http.ResponseWriter, r *http.Request) {
-	query := r.URL.Path[1:]
-	if link, err := storage.GetLinkForKey(query); err == nil {
-		w.Header().Add("Location", link)
-		w.WriteHeader(http.StatusTemporaryRedirect)
-	} else {
-		handleError(w)
-	}
-}
-
-func HandleShortenRequest(w http.ResponseWriter, r *http.Request) {
-	// TODO
-}
-
 func getShortenedLink(r *http.Request, linkID string) string {
 	return config.BaseConfig.ShoretnedBaseURL.Value + "/" + linkID
-}
-
-func handleError(w http.ResponseWriter) {
-	w.WriteHeader(http.StatusBadRequest)
 }
