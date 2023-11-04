@@ -33,6 +33,10 @@ func HandleExistingLinkRequest(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func HandleShortenRequest(w http.ResponseWriter, r *http.Request) {
+	// TODO
+}
+
 func getShortenedLink(r *http.Request, linkID string) string {
 	return config.BaseConfig.ShoretnedBaseURL.Value + "/" + linkID
 }
