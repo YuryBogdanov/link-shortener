@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 
@@ -10,8 +11,12 @@ import (
 )
 
 func HandleShortenRequest(w http.ResponseWriter, r *http.Request) {
-	var reqModel model.ShortenRequest
+	if err := validateHeaders(r.Header); err != nil {
+		handleError(w)
+		return
+	}
 
+	var reqModel model.ShortenRequest
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		handleError(w)
@@ -43,4 +48,13 @@ func prepareResponse(w http.ResponseWriter, link string) []byte {
 		handleError(w)
 	}
 	return bytes
+}
+
+func validateHeaders(headers http.Header) error {
+	contentType := headers.Get("Content-Type")
+	if contentType == "application/json" {
+		return nil
+	} else {
+		return errors.New("wrong content type")
+	}
 }
