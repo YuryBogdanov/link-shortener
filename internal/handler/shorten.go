@@ -11,7 +11,7 @@ import (
 )
 
 func HandleShortenRequest(w http.ResponseWriter, r *http.Request) {
-	if err := validateHeaders(r.Header); err != nil {
+	if err := validateRequest(r); err != nil {
 		handleError(w)
 		return
 	}
@@ -48,6 +48,11 @@ func prepareResponse(w http.ResponseWriter, link string) []byte {
 		handleError(w)
 	}
 	return bytes
+}
+
+func validateRequest(r *http.Request) error {
+	err := validateHeaders(r.Header)
+	return err
 }
 
 func validateHeaders(headers http.Header) error {

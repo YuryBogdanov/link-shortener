@@ -138,18 +138,28 @@ func Test_handleShortenRequest(t *testing.T) {
 	tests := []struct {
 		name                string
 		requestBodyAsString string
-		contentType         map[string]string
+		headerKey           string
+		headerValue         string
 		want                want
 	}{
 		{
-			"Successful case #1",
-			`
-			{"url":"https://practicum.yandex.ru"}
-			`,
-			map[string]string{"Content-Type": "application/json"},
+			"Successful case",
+			`{"url":"https://practicum.yandex.ru"}`,
+			"Content-Type",
+			"application/json",
 			want{
 				200,
 				`{"result":"http://localhost:8080/6bdb5b0e"}`,
+			},
+		},
+		{
+			"Content negotiation",
+			`{"url":"https://practicum.yandex.ru"}`,
+			"Content-Type",
+			"text/html; charset=utf-8",
+			want{
+				400,
+				"",
 			},
 		},
 	}
@@ -158,6 +168,7 @@ func Test_handleShortenRequest(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			bodyReader := strings.NewReader(tt.requestBodyAsString)
 			request := httptest.NewRequest(http.MethodPost, "/api/shorten", bodyReader)
+			request.Header.Add(tt.headerKey, tt.headerValue)
 			w := httptest.NewRecorder()
 			handler.HandleShortenRequest(w, request)
 
