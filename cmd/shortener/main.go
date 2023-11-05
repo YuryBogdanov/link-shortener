@@ -19,7 +19,7 @@ func main() {
 	router := chi.NewRouter()
 	router.Get("/{id}", handler.HandleExistingLinkRequest())
 	router.Post("/", handler.HandleNewLinkRegistration())
-	router.Post("/api/shorten", handler.HandleShortenRequest)
+	router.Post("/api/shorten", handler.HandleShortenRequest())
 
 	baseURL := config.BaseConfig.ServerPath.Value
 	logger.Info(

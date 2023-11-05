@@ -10,35 +10,42 @@ import (
 	"github.com/YuryBogdanov/link-shortener/internal/storage"
 )
 
-func HandleShortenRequest(w http.ResponseWriter, r *http.Request) {
-	if err := validateRequest(r); err != nil {
-		handleError(w)
-		return
-	}
+func HandleShortenRequest() http.HandlerFunc {
+	return withLogging(handleShortenRequest())
+}
 
-	var reqModel model.ShortenRequest
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		handleError(w)
-		return
-	}
-	defer r.Body.Close()
+func handleShortenRequest() http.HandlerFunc {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		if err := validateRequest(r); err != nil {
+			handleError(w)
+			return
+		}
 
-	unmarshalErr := json.Unmarshal(body, &reqModel)
-	if unmarshalErr != nil {
-		handleError(w)
-		return
-	}
+		var reqModel model.ShortenRequest
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			handleError(w)
+			return
+		}
+		defer r.Body.Close()
 
-	link, err := storage.MakeAndStoreShortURL(reqModel.URL)
-	if err != nil {
-		handleError(w)
-		return
-	}
+		unmarshalErr := json.Unmarshal(body, &reqModel)
+		if unmarshalErr != nil {
+			handleError(w)
+			return
+		}
 
-	response := prepareResponse(w, link)
-	w.Header().Add("Content-Type", "application/json")
-	w.Write(response)
+		link, err := storage.MakeAndStoreShortURL(reqModel.URL)
+		if err != nil {
+			handleError(w)
+			return
+		}
+
+		response := prepareResponse(w, link)
+		w.Header().Add("Content-Type", "application/json")
+		w.Write(response)
+	}
+	return fn
 }
 
 func prepareResponse(w http.ResponseWriter, link string) []byte {
