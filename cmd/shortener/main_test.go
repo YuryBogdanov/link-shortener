@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/YuryBogdanov/link-shortener/internal/handler"
@@ -125,6 +126,49 @@ func Test_handleExistingLinkRequest(t *testing.T) {
 
 			assert.Equal(t, tt.want.code, result.StatusCode)
 			assert.Equal(t, tt.want.location, result.Header.Get("Location"))
+		})
+	}
+}
+
+func Test_handleShortenRequest(t *testing.T) {
+	type want struct {
+		code                 int
+		jsonResponseAsString string
+	}
+	tests := []struct {
+		name                string
+		requestBodyAsString string
+		contentType         map[string]string
+		want                want
+	}{
+		{
+			"Successful case #1",
+			`
+			{"url":"https://practicum.yandex.ru"}
+			`,
+			map[string]string{"Content-Type": "application/json"},
+			want{
+				200,
+				`{"result":"http://localhost:8080/6bdb5b0e"}`,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			bodyReader := strings.NewReader(tt.requestBodyAsString)
+			request := httptest.NewRequest(http.MethodPost, "/api/shorten", bodyReader)
+			w := httptest.NewRecorder()
+			handler.HandleShortenRequest(w, request)
+
+			result := w.Result()
+			defer result.Body.Close()
+
+			resultBody, err := io.ReadAll(result.Body)
+			assert.Nil(t, err)
+
+			resultBodyAsString := string(resultBody)
+			assert.Equal(t, tt.want.jsonResponseAsString, resultBodyAsString)
 		})
 	}
 }
