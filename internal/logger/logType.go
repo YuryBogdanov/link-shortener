@@ -21,6 +21,6 @@ func getCurrentLogType() LogType {
 	case string(LogTypeTest):
 		return LogTypeTest
 	}
-	log.Fatal("unrecognized logger type, returning prod logger as default")
+	log.Println("unrecognized logger type, returning prod logger as default")
 	return LogTypeProd
 }
