@@ -6,6 +6,9 @@ on:
     branches:
       - main
 
+env:
+  SHORTENER_ENVIRONMENT: test
+
 jobs:
 
   branchtest:

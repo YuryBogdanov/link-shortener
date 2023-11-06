@@ -7,6 +7,7 @@ import (
 )
 
 var sugar zap.SugaredLogger
+var logType LogType
 
 func Setup() {
 	logger, err := zap.NewDevelopment()
@@ -14,6 +15,7 @@ func Setup() {
 		log.Fatalln(err)
 	}
 
+	logType = getCurrentLogType()
 	sugar = *logger.Sugar()
 }
 
@@ -22,13 +24,27 @@ func Finish() {
 }
 
 func Info(msg string, keysAndValues ...interface{}) {
-	sugar.Infow(msg, keysAndValues...)
+	prefixedMessage := getPrefixedLogMessage(msg)
+	sugar.Infow(prefixedMessage, keysAndValues...)
 }
 
 func Fatal(msg string, keysAndValues ...interface{}) {
-	sugar.Fatalw(msg, keysAndValues...)
+	prefixedMessage := getPrefixedLogMessage(msg)
+	sugar.Fatalw(prefixedMessage, keysAndValues...)
 }
 
 func Error(msg string, keysAndValues ...interface{}) {
-	sugar.Errorw(msg, keysAndValues...)
+	prefixedMessage := getPrefixedLogMessage(msg)
+	sugar.Errorw(prefixedMessage, keysAndValues...)
+}
+
+func getPrefixedLogMessage(msg string) string {
+	switch logType {
+	case LogTypeProd:
+		return "[PROD Log] " + msg
+
+	case LogTypeTest:
+		return "[TEST Log] " + msg
+	}
+	return "[Unknown Log Type] " + msg
 }
