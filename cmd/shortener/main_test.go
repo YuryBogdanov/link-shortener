@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/YuryBogdanov/link-shortener/internal/handler"
-	"github.com/YuryBogdanov/link-shortener/internal/logger"
 	"github.com/YuryBogdanov/link-shortener/internal/storage"
 	"github.com/stretchr/testify/assert"
 )
@@ -65,9 +64,7 @@ func Test_handleNewLinkRegistration(t *testing.T) {
 			},
 		},
 	}
-	t.Setenv("SHORTENER_ENVIRONMENT", "test")
-	logger.Setup()
-	defer logger.Finish()
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(tt.link)))
@@ -125,8 +122,6 @@ func Test_handleExistingLinkRequest(t *testing.T) {
 		},
 	}
 	t.Setenv("SHORTENER_ENVIRONMENT", "test")
-	logger.Setup()
-	defer logger.Finish()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if len(tt.id) != 0 && len(tt.want.location) != 0 {
@@ -181,8 +176,6 @@ func Test_handleShortenRequest(t *testing.T) {
 		},
 	}
 	t.Setenv("SHORTENER_ENVIRONMENT", "test")
-	logger.Setup()
-	defer logger.Finish()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			bodyReader := strings.NewReader(tt.requestBodyAsString)

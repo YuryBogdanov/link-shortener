@@ -10,11 +10,13 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+var lg = logger.DefaultLogger{}
+
 func main() {
 	config.SetupFlags()
 
-	logger.Setup()
-	defer logger.Finish()
+	lg.Setup()
+	defer lg.Finish()
 
 	router := chi.NewRouter()
 	router.Get("/{id}", handler.HandleExistingLinkRequest())
@@ -22,7 +24,7 @@ func main() {
 	router.Post("/api/shorten", handler.HandleShortenRequest())
 
 	baseURL := config.BaseConfig.ServerPath.Value
-	logger.Info(
+	lg.Info(
 		"Starting server",
 		"addr", baseURL,
 	)

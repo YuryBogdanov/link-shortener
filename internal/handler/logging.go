@@ -7,7 +7,12 @@ import (
 	"github.com/YuryBogdanov/link-shortener/internal/logger"
 )
 
+var lg = logger.DefaultLogger{}
+
 func withLogging(h http.HandlerFunc) http.HandlerFunc {
+	lg.Setup()
+	defer lg.Finish()
+
 	logFunc := func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		uri := r.RequestURI
@@ -16,7 +21,7 @@ func withLogging(h http.HandlerFunc) http.HandlerFunc {
 
 		duration := time.Since(start)
 
-		logger.Info(
+		lg.Info(
 			"Serving Request",
 			"uri", uri,
 			"method", method,

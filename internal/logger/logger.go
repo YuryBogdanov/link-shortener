@@ -6,45 +6,40 @@ import (
 	"go.uber.org/zap"
 )
 
-var sugar zap.SugaredLogger
-var logType LogType
+type Logger interface {
+	Setup()
+	Finish()
 
-func Setup() {
+	Info(msg string, keysAndValues ...interface{})
+	Fatal(msg string, keysAndValues ...interface{})
+	Error(msg string, keysAndValues ...interface{})
+}
+
+type DefaultLogger struct {
+	sugar zap.SugaredLogger
+}
+
+func (l *DefaultLogger) Setup() {
 	logger, err := zap.NewDevelopment()
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	logType = getCurrentLogType()
-	sugar = *logger.Sugar()
+	l.sugar = *logger.Sugar()
 }
 
-func Finish() {
-	sugar.Desugar().Sync()
+func (l *DefaultLogger) Finish() {
+	l.sugar.Desugar().Sync()
 }
 
-func Info(msg string, keysAndValues ...interface{}) {
-	prefixedMessage := getPrefixedLogMessage(msg)
-	sugar.Infow(prefixedMessage, keysAndValues...)
+func (l *DefaultLogger) Info(msg string, keysAndValues ...interface{}) {
+	l.sugar.Infow(msg, keysAndValues...)
 }
 
-func Fatal(msg string, keysAndValues ...interface{}) {
-	prefixedMessage := getPrefixedLogMessage(msg)
-	sugar.Fatalw(prefixedMessage, keysAndValues...)
+func (l *DefaultLogger) Fatal(msg string, keysAndValues ...interface{}) {
+	l.sugar.Fatalw(msg, keysAndValues...)
 }
 
-func Error(msg string, keysAndValues ...interface{}) {
-	prefixedMessage := getPrefixedLogMessage(msg)
-	sugar.Errorw(prefixedMessage, keysAndValues...)
-}
-
-func getPrefixedLogMessage(msg string) string {
-	switch logType {
-	case LogTypeProd:
-		return "[PROD Log] " + msg
-
-	case LogTypeTest:
-		return "[TEST Log] " + msg
-	}
-	return "[Unknown Log Type] " + msg
+func (l *DefaultLogger) Error(msg string, keysAndValues ...interface{}) {
+	l.sugar.Errorw(msg, keysAndValues...)
 }
