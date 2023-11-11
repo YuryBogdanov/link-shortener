@@ -55,6 +55,14 @@ func Test_handleNewLinkRegistration(t *testing.T) {
 				"",
 			},
 		},
+		{
+			"Negative case #3 (some gibberish instead of a link)",
+			"some_link_really",
+			want{
+				400,
+				"",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

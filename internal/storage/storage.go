@@ -13,16 +13,12 @@ import (
 const MaxLinkIDLength = 8
 
 var (
-	Links                        map[string]string
-	lock                         = sync.RWMutex{}
-	ErrEmptyLinkError            = errors.New("the link is empty")
-	ErrLinkContainsJustURLScheme = errors.New("the link contains only URL scheme")
+	Links          map[string]string
+	lock           = sync.RWMutex{}
+	errNoSuchValue = errors.New("no such value!")
 )
 
 func MakeAndStoreShortURL(url string) (string, error) {
-	if err := validateURL(url); err != nil {
-		return "", err
-	}
 	if Links == nil {
 		Links = make(map[string]string)
 	}
@@ -43,29 +39,19 @@ func MakeAndStoreShortURL(url string) (string, error) {
 }
 
 func GetLinkForKey(key string) (string, error) {
-	var linkToReturn string
 	lock.RLock()
-	linkToReturn = Links[key]
+	linkToReturn, ok := Links[key]
 	lock.RUnlock()
-	if err := validateURL(linkToReturn); err != nil {
-		return "", err
-	} else {
+	if ok {
 		return linkToReturn, nil
+	} else {
+		return "", errNoSuchValue
 	}
+
 }
 
 func getShortenedLink(linkID string) string {
 	return config.BaseConfig.ShoretnedBaseURL.Value + "/" + linkID
-}
-
-func validateURL(url string) error {
-	if len(url) == 0 {
-		return ErrEmptyLinkError
-	}
-	if url == "https://" || url == "http://" {
-		return ErrLinkContainsJustURLScheme
-	}
-	return nil
 }
 
 func setLinkForKey(key string, link string) {

@@ -1,11 +1,16 @@
 package handler
 
 import (
+	"errors"
 	"io"
 	"net/http"
 	"net/url"
 
 	"github.com/YuryBogdanov/link-shortener/internal/storage"
+)
+
+var (
+	errLinkIsInvalid = errors.New("the link is invalid")
 )
 
 func HandleNewLinkRegistration(w http.ResponseWriter, r *http.Request) {
@@ -19,6 +24,10 @@ func HandleNewLinkRegistration(w http.ResponseWriter, r *http.Request) {
 		handleError(w)
 		return
 	}
+	if validateURL(url) != nil {
+		handleError(w)
+		return
+	}
 	link, linkErr := storage.MakeAndStoreShortURL(string(url.String()))
 	if linkErr != nil {
 		handleError(w)
@@ -26,4 +35,12 @@ func HandleNewLinkRegistration(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte(link))
+}
+
+func validateURL(url *url.URL) error {
+	if len(url.Host) < 4 {
+		return errLinkIsInvalid
+	}
+	return nil
+
 }
