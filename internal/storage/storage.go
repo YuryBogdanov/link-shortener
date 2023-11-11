@@ -13,16 +13,12 @@ import (
 const MaxLinkIDLength = 8
 
 var (
-	Links          map[string]string
+	Links          = make(map[string]string)
 	lock           = sync.RWMutex{}
-	errNoSuchValue = errors.New("no such value!")
+	errNoSuchValue = errors.New("no such value")
 )
 
 func MakeAndStoreShortURL(url string) (string, error) {
-	if Links == nil {
-		Links = make(map[string]string)
-	}
-
 	hash := md5.New()
 	io.WriteString(hash, url)
 	encodedString := fmt.Sprintf("%x", hash.Sum(nil))
