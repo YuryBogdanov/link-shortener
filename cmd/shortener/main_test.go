@@ -56,6 +56,14 @@ func Test_handleNewLinkRegistration(t *testing.T) {
 				"",
 			},
 		},
+		{
+			"Negative case #3 (some gibberish instead of a link)",
+			"some_link_really",
+			want{
+				400,
+				"",
+			},
+		},
 	}
 	t.Setenv("SHORTENER_ENVIRONMENT", "test")
 	logger.Setup()
