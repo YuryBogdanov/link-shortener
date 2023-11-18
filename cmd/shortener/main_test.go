@@ -64,12 +64,14 @@ func Test_handleNewLinkRegistration(t *testing.T) {
 			},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(tt.link)))
 			w := httptest.NewRecorder()
 
-			handler.HandleNewLinkRegistration(w, request)
+			fn := handler.HandleNewLinkRegistration()
+			fn.ServeHTTP(w, request)
 
 			result := w.Result()
 			assert.Equal(t, tt.want.code, result.StatusCode)
@@ -119,6 +121,7 @@ func Test_handleExistingLinkRequest(t *testing.T) {
 			},
 		},
 	}
+	t.Setenv("SHORTENER_ENVIRONMENT", "test")
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if len(tt.id) != 0 && len(tt.want.location) != 0 {
@@ -127,7 +130,8 @@ func Test_handleExistingLinkRequest(t *testing.T) {
 			}
 			request := httptest.NewRequest(http.MethodGet, "/"+tt.id, nil)
 			w := httptest.NewRecorder()
-			handler.HandleExistingLinkRequest(w, request)
+			fn := handler.HandleExistingLinkRequest()
+			fn.ServeHTTP(w, request)
 
 			result := w.Result()
 			defer result.Body.Close()
@@ -171,14 +175,15 @@ func Test_handleShortenRequest(t *testing.T) {
 			},
 		},
 	}
-
+	t.Setenv("SHORTENER_ENVIRONMENT", "test")
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			bodyReader := strings.NewReader(tt.requestBodyAsString)
 			request := httptest.NewRequest(http.MethodPost, "/api/shorten", bodyReader)
 			request.Header.Add(tt.headerKey, tt.headerValue)
 			w := httptest.NewRecorder()
-			handler.HandleShortenRequest(w, request)
+			fn := handler.HandleShortenRequest()
+			fn.ServeHTTP(w, request)
 
 			result := w.Result()
 			defer result.Body.Close()
