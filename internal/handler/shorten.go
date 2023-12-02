@@ -42,6 +42,7 @@ func handleShortenRequest() http.HandlerFunc {
 		}
 
 		response := prepareResponse(w, link)
+		w.WriteHeader(http.StatusCreated)
 		w.Header().Add("Content-Type", "application/json")
 		w.Write(response)
 	}
