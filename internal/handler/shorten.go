@@ -11,7 +11,7 @@ import (
 )
 
 func HandleShortenRequest() http.HandlerFunc {
-	return withLogging(handleShortenRequest())
+	return withCompression(withLogging(handleShortenRequest()))
 }
 
 func handleShortenRequest() http.HandlerFunc {
