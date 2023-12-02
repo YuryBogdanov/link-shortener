@@ -17,6 +17,7 @@ func HandleShortenRequest() http.HandlerFunc {
 func handleShortenRequest() http.HandlerFunc {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		if err := validateRequest(r); err != nil {
+			lg.Info("Shit is happening on 20th line")
 			handleError(w)
 			return
 		}
@@ -24,6 +25,7 @@ func handleShortenRequest() http.HandlerFunc {
 		var reqModel model.ShortenRequest
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
+			lg.Info("Shit is happening on 27th line")
 			handleError(w)
 			return
 		}
@@ -31,12 +33,14 @@ func handleShortenRequest() http.HandlerFunc {
 
 		unmarshalErr := json.Unmarshal(body, &reqModel)
 		if unmarshalErr != nil {
+			lg.Info("Shit is happening on 34th line")
 			handleError(w)
 			return
 		}
 
 		link, err := storage.MakeAndStoreShortURL(reqModel.URL)
 		if err != nil {
+			lg.Info("Shit is happening on 40th line")
 			handleError(w)
 			return
 		}

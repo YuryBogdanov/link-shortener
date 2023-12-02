@@ -23,7 +23,7 @@ func (w gzipWriter) Write(b []byte) (int, error) {
 
 func withCompression(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get(incomingContentCompressionHeader) != "gzip" {
+		if r.Header.Get(incomingContentCompressionHeader) != encodingMethod {
 			next.ServeHTTP(w, r)
 			return
 		}
