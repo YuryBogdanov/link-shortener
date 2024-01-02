@@ -13,28 +13,35 @@ var (
 	errLinkIsInvalid = errors.New("the link is invalid")
 )
 
-func HandleNewLinkRegistration(w http.ResponseWriter, r *http.Request) {
-	payload, payloadErr := io.ReadAll(r.Body)
-	if payloadErr != nil {
-		handleError(w)
-		return
+func HandleNewLinkRegistration() http.HandlerFunc {
+	return withLogging(newLinkRegistration())
+}
+
+func newLinkRegistration() http.HandlerFunc {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		payload, payloadErr := io.ReadAll(r.Body)
+		if payloadErr != nil {
+			handleError(w)
+			return
+		}
+		url, urlErr := url.ParseRequestURI(string(payload))
+		if urlErr != nil {
+			handleError(w)
+			return
+		}
+		if validateURL(url) != nil {
+			handleError(w)
+			return
+		}
+		link, linkErr := storage.MakeAndStoreShortURL(string(url.String()))
+		if linkErr != nil {
+			handleError(w)
+			return
+		}
+		w.WriteHeader(http.StatusCreated)
+		w.Write([]byte(link))
 	}
-	url, urlErr := url.ParseRequestURI(string(payload))
-	if urlErr != nil {
-		handleError(w)
-		return
-	}
-	if validateURL(url) != nil {
-		handleError(w)
-		return
-	}
-	link, linkErr := storage.MakeAndStoreShortURL(string(url.String()))
-	if linkErr != nil {
-		handleError(w)
-		return
-	}
-	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(link))
+	return fn
 }
 
 func validateURL(url *url.URL) error {
@@ -42,5 +49,4 @@ func validateURL(url *url.URL) error {
 		return errLinkIsInvalid
 	}
 	return nil
-
 }

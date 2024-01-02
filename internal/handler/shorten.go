@@ -10,35 +10,47 @@ import (
 	"github.com/YuryBogdanov/link-shortener/internal/storage"
 )
 
-func HandleShortenRequest(w http.ResponseWriter, r *http.Request) {
-	if err := validateRequest(r); err != nil {
-		handleError(w)
-		return
-	}
+const (
+	headerKeyContentType     = "Content-Type"
+	headerKeyContentEncoding = "Content-Encoding"
 
-	var reqModel model.ShortenRequest
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		handleError(w)
-		return
-	}
-	defer r.Body.Close()
+	validContentEncodingType = "gzip"
+)
 
-	unmarshalErr := json.Unmarshal(body, &reqModel)
-	if unmarshalErr != nil {
-		handleError(w)
-		return
-	}
+func HandleShortenRequest() http.HandlerFunc {
+	return withCompression(withLogging(handleShortenRequest()))
+}
 
-	link, err := storage.MakeAndStoreShortURL(reqModel.URL)
-	if err != nil {
-		handleError(w)
-		return
-	}
+func handleShortenRequest() http.HandlerFunc {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		if err := validateRequest(r); err != nil {
+			handleError(w)
+			return
+		}
+		var reqModel model.ShortenRequest
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			handleError(w)
+			return
+		}
+		defer r.Body.Close()
 
-	response := prepareResponse(w, link)
-	w.Header().Add("Content-Type", "application/json")
-	w.Write(response)
+		unmarshalErr := json.Unmarshal(body, &reqModel)
+		if unmarshalErr != nil {
+			handleError(w)
+			return
+		}
+		link, err := storage.MakeAndStoreShortURL(reqModel.URL)
+		if err != nil {
+			handleError(w)
+			return
+		}
+		response := prepareResponse(w, link)
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		w.Write(response)
+	}
+	return fn
 }
 
 func prepareResponse(w http.ResponseWriter, link string) []byte {
@@ -56,10 +68,20 @@ func validateRequest(r *http.Request) error {
 }
 
 func validateHeaders(headers http.Header) error {
-	contentType := headers.Get("Content-Type")
+	contentType := headers.Get(headerKeyContentType)
+	contentEncoding := headers.Get(headerKeyContentEncoding)
+	var err error
 	if contentType == "application/json" {
 		return nil
 	} else {
-		return errors.New("wrong content type")
+		err = errors.New("wrong content type")
 	}
+
+	if contentEncoding == validContentEncodingType {
+		return nil
+	} else {
+		err = errors.New("wrong content type")
+	}
+
+	return err
 }
