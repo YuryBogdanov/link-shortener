@@ -41,6 +41,10 @@ func withCompression(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 		gunzippedBod, err := io.ReadAll(gr)
+		if err != nil {
+			handleError(w)
+			return
+		}
 
 		buf := bytes.NewBuffer(gunzippedBod)
 		r.Body = io.NopCloser(buf)
