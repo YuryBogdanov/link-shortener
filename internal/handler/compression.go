@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bytes"
 	"compress/gzip"
 	"io"
 	"net/http"
@@ -34,7 +35,17 @@ func withCompression(next http.HandlerFunc) http.HandlerFunc {
 		}
 		defer gz.Close()
 
-		w.Header().Set(outgoingContentCompressionHeader, encodingMethod)
+		gr, err := gzip.NewReader(r.Body)
+		if err != nil {
+			io.WriteString(w, err.Error())
+			return
+		}
+		gunzippedBod, err := io.ReadAll(gr)
+
+		buf := bytes.NewBuffer(gunzippedBod)
+		r.Body = io.NopCloser(buf)
+
+		w.Header().Add(outgoingContentCompressionHeader, encodingMethod)
 		next.ServeHTTP(gzipWriter{ResponseWriter: w, Writer: gz}, r)
 	}
 }

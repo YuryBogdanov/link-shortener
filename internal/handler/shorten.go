@@ -10,6 +10,13 @@ import (
 	"github.com/YuryBogdanov/link-shortener/internal/storage"
 )
 
+const (
+	headerKeyContentType     = "Content-Type"
+	headerKeyContentEncoding = "Content-Encoding"
+
+	validContentEncodingType = "gzip"
+)
+
 func HandleShortenRequest() http.HandlerFunc {
 	return withCompression(withLogging(handleShortenRequest()))
 }
@@ -20,7 +27,6 @@ func handleShortenRequest() http.HandlerFunc {
 			handleError(w)
 			return
 		}
-
 		var reqModel model.ShortenRequest
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
@@ -34,13 +40,11 @@ func handleShortenRequest() http.HandlerFunc {
 			handleError(w)
 			return
 		}
-
 		link, err := storage.MakeAndStoreShortURL(reqModel.URL)
 		if err != nil {
 			handleError(w)
 			return
 		}
-
 		response := prepareResponse(w, link)
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
@@ -64,10 +68,20 @@ func validateRequest(r *http.Request) error {
 }
 
 func validateHeaders(headers http.Header) error {
-	contentType := headers.Get("Content-Type")
+	contentType := headers.Get(headerKeyContentType)
+	contentEncoding := headers.Get(headerKeyContentEncoding)
+	var err error
 	if contentType == "application/json" {
 		return nil
 	} else {
-		return errors.New("wrong content type")
+		err = errors.New("wrong content type")
 	}
+
+	if contentEncoding == validContentEncodingType {
+		return nil
+	} else {
+		err = errors.New("wrong content type")
+	}
+
+	return err
 }
