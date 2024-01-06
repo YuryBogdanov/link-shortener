@@ -8,6 +8,7 @@ import (
 const (
 	serverAddressKey = "SERVER_ADDRESS"
 	baseURLKey       = "BASE_URL"
+	storagePath      = "FILE_STORAGE_PATH"
 )
 
 func SetupFlags() {
@@ -15,12 +16,14 @@ func SetupFlags() {
 
 	serverPath := obtainServerPath(configFlags)
 	baseURL := obtainBaseURL(configFlags)
+	storageFilePath := obtainStorageFilePath(configFlags)
 
 	configFlags.Parse(os.Args[1:])
 
 	if configFlags.Parsed() {
 		BaseConfig.ServerPath.Value = *serverPath
 		BaseConfig.ShoretnedBaseURL.Value = *baseURL
+		BaseConfig.StorageFilePath.Value = *storageFilePath
 	}
 }
 
@@ -42,4 +45,14 @@ func obtainBaseURL(flags *flag.FlagSet) *string {
 		baseURL = flags.String(BaseConfig.ShoretnedBaseURL.CliParameterName, BaseConfig.ShoretnedBaseURL.Value, "Base url for shortened links")
 	}
 	return baseURL
+}
+
+func obtainStorageFilePath(flags *flag.FlagSet) *string {
+	var filePath *string
+	if path, exists := os.LookupEnv(storagePath); exists {
+		filePath = &path
+	} else {
+		filePath = flags.String(BaseConfig.StorageFilePath.CliParameterName, BaseConfig.StorageFilePath.Value, "Local storage's file path")
+	}
+	return filePath
 }
