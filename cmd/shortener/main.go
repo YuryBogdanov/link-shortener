@@ -7,6 +7,7 @@ import (
 	"github.com/YuryBogdanov/link-shortener/internal/config"
 	"github.com/YuryBogdanov/link-shortener/internal/handler"
 	"github.com/YuryBogdanov/link-shortener/internal/logger"
+	"github.com/YuryBogdanov/link-shortener/internal/storage"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -28,6 +29,10 @@ func main() {
 		"Starting server",
 		"addr", baseURL,
 	)
+
+	storageFile := config.BaseConfig.StorageFilePath.Value
+	storage.SetupPersistentStorage(storageFile)
+
 	err := http.ListenAndServe(baseURL, router)
 	if err != nil {
 		log.Fatal(err)
