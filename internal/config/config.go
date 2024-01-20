@@ -26,7 +26,7 @@ var BaseConfig Config = Config{
 	Option{
 		"Storage's file path",
 		"f",
-		"/tmp/short-url-db.json",
+		"tmp/short-url-db.json",
 	},
 }
 

@@ -2,7 +2,9 @@ package storage
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
+	"path/filepath"
 	"reflect"
 )
 
@@ -18,10 +20,16 @@ type FileStorage struct {
 var Storage Storager
 
 func (fs FileStorage) Store(record interface{}) error {
-	file, err := os.OpenFile(fs.FilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	dir := filepath.Dir(fs.FilePath)
+	if err := os.MkdirAll(dir, 0777); err != nil {
+		return err
+	}
+	file, err := os.OpenFile(fs.FilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0777)
+	fmt.Println(err)
 	if err != nil {
 		return err
 	}
+	fmt.Println(fs.FilePath)
 	json, err := json.Marshal(record)
 	if err != nil {
 		return err
