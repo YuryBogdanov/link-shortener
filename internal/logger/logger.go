@@ -19,6 +19,12 @@ type DefaultLogger struct {
 	sugar zap.SugaredLogger
 }
 
+func NewLogger() DefaultLogger {
+	lg := DefaultLogger{}
+	lg.Setup()
+	return lg
+}
+
 func (l *DefaultLogger) Setup() {
 	logger, err := zap.NewDevelopment()
 	if err != nil {

@@ -1,16 +1,17 @@
 package storage
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
-	"reflect"
 )
 
 type Storager interface {
-	Store(record interface{}) error
-	Get(id string, objectType reflect.Type) interface{}
+	Store(record StorableLink) error
+	Get(id string) StorableLink
+	GetAllItems() []StorableLink
 }
 
 type FileStorage struct {
@@ -19,17 +20,15 @@ type FileStorage struct {
 
 var Storage Storager
 
-func (fs FileStorage) Store(record interface{}) error {
+func (fs FileStorage) Store(record StorableLink) error {
 	dir := filepath.Dir(fs.FilePath)
 	if err := os.MkdirAll(dir, 0777); err != nil {
 		return err
 	}
 	file, err := os.OpenFile(fs.FilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0777)
-	fmt.Println(err)
 	if err != nil {
 		return err
 	}
-	fmt.Println(fs.FilePath)
 	json, err := json.Marshal(record)
 	if err != nil {
 		return err
@@ -40,6 +39,31 @@ func (fs FileStorage) Store(record interface{}) error {
 	return nil
 }
 
-func (fs FileStorage) Get(id string, objectType reflect.Type) interface{} {
-	return nil
+func (fs FileStorage) Get(id string) StorableLink {
+	return StorableLink{}
+}
+
+func (fs FileStorage) GetAllItems() []StorableLink {
+	file, err := os.OpenFile(fs.FilePath, os.O_RDONLY, 0777)
+	defer file.Close()
+	if err != nil {
+		lg.Info("couldn't open storage file, skipping")
+		return make([]StorableLink, 0)
+	}
+
+	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanLines)
+
+	links := make([]StorableLink, 0)
+
+	for scanner.Scan() {
+		text := scanner.Text()
+		data := []byte(text)
+		var obj *StorableLink
+		json.Unmarshal(data, &obj)
+		fmt.Println(obj)
+		links = append(links, *obj)
+	}
+
+	return links
 }

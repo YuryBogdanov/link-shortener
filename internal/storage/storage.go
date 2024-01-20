@@ -31,6 +31,10 @@ func SetupPersistentStorage(fileName string) {
 	lg.Setup()
 	defer lg.Finish()
 	Storage = FileStorage{FilePath: fileName}
+	storedLinks := Storage.GetAllItems()
+	for _, link := range storedLinks {
+		Links[link.ShortURL] = link.OriginalURL
+	}
 }
 
 func MakeAndStoreShortURL(url string) (string, error) {
@@ -75,9 +79,8 @@ func setLinkForKey(key string, link string) {
 		ShortURL:    key,
 		OriginalURL: link,
 	}
-	fmt.Println(l)
 	err := Storage.Store(l)
 	if err != nil {
-		lg.Fatal("KURWA")
+		lg.Error("couldn't store a new record", l)
 	}
 }
