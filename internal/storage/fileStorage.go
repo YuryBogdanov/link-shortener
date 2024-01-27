@@ -45,11 +45,11 @@ func (fs FileStorage) Get(id string) StorableLink {
 
 func (fs FileStorage) GetAllItems() []StorableLink {
 	file, err := os.OpenFile(fs.FilePath, os.O_RDONLY, 0777)
-	defer file.Close()
 	if err != nil {
 		lg.Info("couldn't open storage file, skipping")
 		return make([]StorableLink, 0)
 	}
+	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
 	scanner.Split(bufio.ScanLines)

@@ -41,16 +41,22 @@ func MakeAndStoreShortURL(url string) (string, error) {
 	hash := md5.New()
 	io.WriteString(hash, url)
 	encodedString := fmt.Sprintf("%x", hash.Sum(nil))
+
+	var storageKey string
 	if len([]rune(encodedString)) < MaxLinkIDLength {
-		setLinkForKey(encodedString, url)
-		resultLink := getShortenedLink(encodedString)
-		return resultLink, nil
+		storageKey = encodedString
 	} else {
-		maxID := encodedString[:MaxLinkIDLength]
-		setLinkForKey(maxID, url)
-		resultLink := getShortenedLink(maxID)
-		return resultLink, nil
+		storageKey = encodedString[:MaxLinkIDLength]
 	}
+
+	storedLink, linkAlredyStored := Links[storageKey]
+	if linkAlredyStored {
+		return storedLink, nil
+	}
+
+	setLinkForKey(storageKey, url)
+	resultLink := getShortenedLink(storageKey)
+	return resultLink, nil
 }
 
 func GetLinkForKey(key string) (string, error) {
