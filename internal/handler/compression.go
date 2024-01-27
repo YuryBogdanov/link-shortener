@@ -10,7 +10,8 @@ import (
 const (
 	incomingContentCompressionHeader = "Accept-Encoding"
 	outgoingContentCompressionHeader = "Content-Encoding"
-	encodingMethod                   = "gzip"
+
+	encodingMethod = "gzip"
 )
 
 type gzipWriter struct {
@@ -24,7 +25,7 @@ func (w gzipWriter) Write(b []byte) (int, error) {
 
 func withCompression(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get(incomingContentCompressionHeader) != encodingMethod {
+		if !needsCompression(r.Header) {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -33,7 +34,7 @@ func withCompression(next http.HandlerFunc) http.HandlerFunc {
 
 		gr, err := gzip.NewReader(r.Body)
 		if err != nil {
-			io.WriteString(w, err.Error())
+			handleError(w)
 			return
 		}
 		gunzippedBody, err := io.ReadAll(gr)
@@ -44,8 +45,15 @@ func withCompression(next http.HandlerFunc) http.HandlerFunc {
 		buf := bytes.NewBuffer(gunzippedBody)
 		r.Body = io.NopCloser(buf)
 
-		w.Header().Add(outgoingContentCompressionHeader, encodingMethod)
+		w.Header().Add("Content-Encoding", encodingMethod)
 		next.ServeHTTP(gzipWriter{ResponseWriter: w, Writer: gz}, r)
 		next.ServeHTTP(w, r)
 	}
+}
+
+func needsCompression(headers http.Header) bool {
+	accept := headers.Get("Accept-Encoding")
+	contentEncoding := headers.Get("Content-Encoding")
+
+	return !(contentEncoding == "" || accept == "")
 }
