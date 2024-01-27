@@ -28,11 +28,7 @@ func withCompression(next http.HandlerFunc) http.HandlerFunc {
 			next.ServeHTTP(w, r)
 			return
 		}
-		gz, err := gzip.NewWriterLevel(w, gzip.BestSpeed)
-		if err != nil {
-			io.WriteString(w, err.Error())
-			return
-		}
+		gz := gzip.NewWriter(w)
 		defer gz.Close()
 
 		gr, err := gzip.NewReader(r.Body)
