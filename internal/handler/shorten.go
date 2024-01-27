@@ -14,7 +14,9 @@ const (
 	headerKeyContentType     = "Content-Type"
 	headerKeyContentEncoding = "Content-Encoding"
 
+	jsonContentType          = "application/json"
 	validContentEncodingType = "gzip"
+	emptyHeaderValue         = ""
 )
 
 func HandleShortenRequest() http.HandlerFunc {
@@ -70,18 +72,30 @@ func validateRequest(r *http.Request) error {
 func validateHeaders(headers http.Header) error {
 	contentType := headers.Get(headerKeyContentType)
 	contentEncoding := headers.Get(headerKeyContentEncoding)
-	var err error
-	if contentType == "application/json" {
-		return nil
-	} else {
-		err = errors.New("wrong content type")
+
+	var ok bool
+	switch contentType {
+	case jsonContentType:
+		ok = true
+
+	default:
+		ok = false
 	}
 
-	if contentEncoding == validContentEncodingType {
-		return nil
-	} else {
-		err = errors.New("wrong content type")
+	switch contentEncoding {
+	case emptyHeaderValue:
+		break
+
+	case validContentEncodingType:
+		ok = true
+
+	default:
+		ok = false
 	}
 
-	return err
+	if ok {
+		return nil
+	} else {
+		return errors.New("invalid headers")
+	}
 }

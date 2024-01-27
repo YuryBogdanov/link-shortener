@@ -122,7 +122,7 @@ func Test_handleExistingLinkRequest(t *testing.T) {
 			},
 		},
 	}
-	t.Setenv("SHORTENER_ENVIRONMENT", "test")
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if len(tt.id) != 0 && len(tt.want.location) != 0 {
@@ -176,7 +176,7 @@ func Test_handleShortenRequest(t *testing.T) {
 			},
 		},
 	}
-	t.Setenv("SHORTENER_ENVIRONMENT", "test")
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			bodyReader := strings.NewReader(tt.requestBodyAsString)
@@ -198,7 +198,7 @@ func Test_handleShortenRequest(t *testing.T) {
 	}
 }
 
-func Test_CompressedPayloadHandling(t *testing.T) {
+func Test_CompressedPayloadHandlingInShorten(t *testing.T) {
 	type want struct {
 		code                 int
 		jsonResponseAsString string
@@ -227,17 +227,88 @@ func Test_CompressedPayloadHandling(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
-			zw, err := gzip.NewWriterLevel(&buf, gzip.BestSpeed)
-			if err != nil {
-				assert.Fail(t, "failed to create gzip writer")
-			}
+			zw := gzip.NewWriter(&buf)
 			_, _ = zw.Write([]byte(tt.requestBodyAsString))
 			_ = zw.Close()
+
 			reader := bytes.NewReader(buf.Bytes())
 			request := httptest.NewRequest(http.MethodPost, "/api/shorten", reader)
 			request.Header.Add(tt.compressionHeaderKey, tt.compressionHeaderValue)
 			w := httptest.NewRecorder()
 			fn := handler.HandleShortenRequest()
+
+			fn.ServeHTTP(w, request)
+
+			result := w.Result()
+			defer result.Body.Close()
+			resultBody, err := io.ReadAll(result.Body)
+			assert.Nil(t, err)
+
+			assert.Equal(t, tt.want.code, result.StatusCode)
+
+			gzipReader, gunzipErr := gzip.NewReader(bytes.NewBuffer(resultBody))
+			if gunzipErr != nil {
+				assert.Fail(t, "failed to gunzip a response")
+			}
+
+			var gunzipedBuffer bytes.Buffer
+			_, gErr := gunzipedBuffer.ReadFrom(gzipReader)
+			if gErr != nil {
+				assert.Fail(t, "couldn't read response")
+			}
+
+			resData := gunzipedBuffer.Bytes()
+			assert.Equal(t, tt.want.jsonResponseAsString, string(resData))
+		})
+	}
+}
+
+func Test_CompressedPayloadHandlingInCompression(t *testing.T) {
+	type want struct {
+		code                 int
+		jsonResponseAsString string
+	}
+	tests := []struct {
+		name                   string
+		requestLink            string
+		compressionHeaderKey   string
+		compressionHeaderValue string
+		want                   want
+	}{
+		{
+			"Successful case #1",
+			"https://practicum.yandex.ru",
+			"Content-Encoding",
+			"gzip",
+			want{
+				201,
+				`http://localhost:8080/6bdb5b0e`,
+			},
+		},
+		{
+			"Unsuccessful case #1",
+			"some_long_text",
+			"Content-Encoding",
+			"gzip",
+			want{
+				400,
+				``,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			zw := gzip.NewWriter(&buf)
+			_, _ = zw.Write([]byte(tt.requestLink))
+			_ = zw.Close()
+
+			reader := bytes.NewReader(buf.Bytes())
+			request := httptest.NewRequest(http.MethodPost, "/", reader)
+			request.Header.Add(tt.compressionHeaderKey, tt.compressionHeaderValue)
+			w := httptest.NewRecorder()
+			fn := handler.HandleNewLinkRegistration()
 
 			fn.ServeHTTP(w, request)
 
