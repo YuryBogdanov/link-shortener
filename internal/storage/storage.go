@@ -49,13 +49,14 @@ func MakeAndStoreShortURL(url string) (string, error) {
 		storageKey = encodedString[:MaxLinkIDLength]
 	}
 
-	storedLink, linkAlredyStored := Links[storageKey]
+	resultLink := getShortenedLink(storageKey)
+
+	_, linkAlredyStored := Links[storageKey]
 	if linkAlredyStored {
-		return storedLink, nil
+		return resultLink, nil
 	}
 
 	setLinkForKey(storageKey, url)
-	resultLink := getShortenedLink(storageKey)
 	return resultLink, nil
 }
 
