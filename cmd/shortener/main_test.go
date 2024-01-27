@@ -122,7 +122,7 @@ func Test_handleExistingLinkRequest(t *testing.T) {
 			},
 		},
 	}
-	t.Setenv("SHORTENER_ENVIRONMENT", "test")
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if len(tt.id) != 0 && len(tt.want.location) != 0 {
@@ -176,7 +176,7 @@ func Test_handleShortenRequest(t *testing.T) {
 			},
 		},
 	}
-	t.Setenv("SHORTENER_ENVIRONMENT", "test")
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			bodyReader := strings.NewReader(tt.requestBodyAsString)

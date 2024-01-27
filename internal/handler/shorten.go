@@ -83,7 +83,10 @@ func validateHeaders(headers http.Header) error {
 	}
 
 	switch contentEncoding {
-	case validContentEncodingType, emptyHeaderValue:
+	case emptyHeaderValue:
+		break
+
+	case validContentEncodingType:
 		ok = true
 
 	default:
