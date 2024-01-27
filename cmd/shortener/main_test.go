@@ -227,12 +227,10 @@ func Test_CompressedPayloadHandling(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
-			zw, err := gzip.NewWriterLevel(&buf, gzip.BestSpeed)
-			if err != nil {
-				assert.Fail(t, "failed to create gzip writer")
-			}
+			zw := gzip.NewWriter(&buf)
 			_, _ = zw.Write([]byte(tt.requestBodyAsString))
 			_ = zw.Close()
+
 			reader := bytes.NewReader(buf.Bytes())
 			request := httptest.NewRequest(http.MethodPost, "/api/shorten", reader)
 			request.Header.Add(tt.compressionHeaderKey, tt.compressionHeaderValue)
