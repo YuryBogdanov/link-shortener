@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	incomingContentCompressionHeader = "Content-Encoding"
-	outgoingContentCompressionHeader = "Accept-Encoding"
+	incomingContentCompressionHeader = "Accept-Encoding"
+	outgoingContentCompressionHeader = "Content-Encoding"
 	encodingMethod                   = "gzip"
 )
 
@@ -46,5 +46,6 @@ func withCompression(next http.HandlerFunc) http.HandlerFunc {
 
 		w.Header().Add(outgoingContentCompressionHeader, encodingMethod)
 		next.ServeHTTP(gzipWriter{ResponseWriter: w, Writer: gz}, r)
+		next.ServeHTTP(w, r)
 	}
 }
