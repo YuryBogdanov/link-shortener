@@ -204,19 +204,20 @@ func Test_CompressedPayloadHandlingInShorten(t *testing.T) {
 		jsonResponseAsString string
 	}
 	tests := []struct {
-		name                   string
-		requestBodyAsString    string
-		requestLink            string
-		compressionHeaderKey   string
-		compressionHeaderValue string
-		want                   want
+		name                string
+		requestBodyAsString string
+		requestLink         string
+		headers             map[string]string
+		want                want
 	}{
 		{
 			"Successful case #1",
 			`{"url":"https://practicum.yandex.ru"}`,
 			"https://practicum.yandex.ru",
-			"Content-Encoding",
-			"gzip",
+			map[string]string{
+				"Content-Encoding": "gzip",
+				"Accept-Encoding":  "gzip",
+			},
 			want{
 				201,
 				`{"result":"http://localhost:8080/6bdb5b0e"}`,
@@ -233,7 +234,9 @@ func Test_CompressedPayloadHandlingInShorten(t *testing.T) {
 
 			reader := bytes.NewReader(buf.Bytes())
 			request := httptest.NewRequest(http.MethodPost, "/api/shorten", reader)
-			request.Header.Add(tt.compressionHeaderKey, tt.compressionHeaderValue)
+			for key, value := range tt.headers {
+				request.Header.Add(key, value)
+			}
 			w := httptest.NewRecorder()
 			fn := handler.HandleShortenRequest()
 
@@ -263,23 +266,24 @@ func Test_CompressedPayloadHandlingInShorten(t *testing.T) {
 	}
 }
 
-func Test_CompressedPayloadHandlingInCompression(t *testing.T) {
+func Test_CompressedPayloadHandlingInLinkRegistration(t *testing.T) {
 	type want struct {
 		code                 int
 		jsonResponseAsString string
 	}
 	tests := []struct {
-		name                   string
-		requestLink            string
-		compressionHeaderKey   string
-		compressionHeaderValue string
-		want                   want
+		name        string
+		requestLink string
+		headers     map[string]string
+		want        want
 	}{
 		{
 			"Successful case #1",
 			"https://practicum.yandex.ru",
-			"Content-Encoding",
-			"gzip",
+			map[string]string{
+				"Content-Encoding": "gzip",
+				"Accept-Encoding":  "gzip",
+			},
 			want{
 				201,
 				`http://localhost:8080/6bdb5b0e`,
@@ -288,8 +292,10 @@ func Test_CompressedPayloadHandlingInCompression(t *testing.T) {
 		{
 			"Unsuccessful case #1",
 			"some_long_text",
-			"Content-Encoding",
-			"gzip",
+			map[string]string{
+				"Content-Encoding": "gzip",
+				"Accept-Encoding":  "gzip",
+			},
 			want{
 				400,
 				``,
@@ -306,7 +312,9 @@ func Test_CompressedPayloadHandlingInCompression(t *testing.T) {
 
 			reader := bytes.NewReader(buf.Bytes())
 			request := httptest.NewRequest(http.MethodPost, "/", reader)
-			request.Header.Add(tt.compressionHeaderKey, tt.compressionHeaderValue)
+			for key, value := range tt.headers {
+				request.Header.Add(key, value)
+			}
 			w := httptest.NewRecorder()
 			fn := handler.HandleNewLinkRegistration()
 
