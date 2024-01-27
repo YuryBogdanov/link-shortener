@@ -47,7 +47,6 @@ func withCompression(next http.HandlerFunc) http.HandlerFunc {
 
 		w.Header().Add("Content-Encoding", encodingMethod)
 		next.ServeHTTP(gzipWriter{ResponseWriter: w, Writer: gz}, r)
-		next.ServeHTTP(w, r)
 	}
 }
 

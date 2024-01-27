@@ -86,6 +86,7 @@ func setLinkForKey(key string, link string) {
 		ShortURL:    key,
 		OriginalURL: link,
 	}
+	fmt.Println(Storage)
 	err := Storage.Store(l)
 	if err != nil {
 		lg.Error("couldn't store a new record", l)
