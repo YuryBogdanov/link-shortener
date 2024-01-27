@@ -13,14 +13,14 @@ const (
 	encodingMethod                   = "gzip"
 )
 
-type gzipWriter struct {
-	http.ResponseWriter
-	Writer io.Writer
-}
+// type gzipWriter struct {
+// 	http.ResponseWriter
+// 	Writer io.Writer
+// }
 
-func (w gzipWriter) Write(b []byte) (int, error) {
-	return w.Writer.Write(b)
-}
+// func (w gzipWriter) Write(b []byte) (int, error) {
+// 	return w.Writer.Write(b)
+// }
 
 func withCompression(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -45,6 +45,7 @@ func withCompression(next http.HandlerFunc) http.HandlerFunc {
 		r.Body = io.NopCloser(buf)
 
 		w.Header().Add(outgoingContentCompressionHeader, encodingMethod)
-		next.ServeHTTP(gzipWriter{ResponseWriter: w, Writer: gz}, r)
+		// next.ServeHTTP(gzipWriter{ResponseWriter: w, Writer: gz}, r)
+		next.ServeHTTP(w, r)
 	}
 }
