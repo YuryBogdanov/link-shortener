@@ -14,7 +14,7 @@ var (
 )
 
 func HandleNewLinkRegistration() http.HandlerFunc {
-	return withLogging(newLinkRegistration())
+	return withCompression(withLogging(newLinkRegistration()))
 }
 
 func newLinkRegistration() http.HandlerFunc {

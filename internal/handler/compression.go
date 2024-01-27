@@ -40,13 +40,12 @@ func withCompression(next http.HandlerFunc) http.HandlerFunc {
 			io.WriteString(w, err.Error())
 			return
 		}
-		gunzippedBod, err := io.ReadAll(gr)
+		gunzippedBody, err := io.ReadAll(gr)
 		if err != nil {
 			handleError(w)
 			return
 		}
-
-		buf := bytes.NewBuffer(gunzippedBod)
+		buf := bytes.NewBuffer(gunzippedBody)
 		r.Body = io.NopCloser(buf)
 
 		w.Header().Add(outgoingContentCompressionHeader, encodingMethod)
