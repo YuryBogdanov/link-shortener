@@ -9,6 +9,7 @@ type Option struct {
 type Config struct {
 	ServerPath       Option
 	ShoretnedBaseURL Option
+	StorageFilePath  Option
 }
 
 var BaseConfig Config = Config{
@@ -21,6 +22,11 @@ var BaseConfig Config = Config{
 		"Output link host",
 		"b",
 		"http://localhost:8080",
+	},
+	Option{
+		"Storage's file path",
+		"f",
+		"tmp/short-url-db.json",
 	},
 }
 

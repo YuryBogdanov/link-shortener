@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"compress/gzip"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -64,12 +65,16 @@ func Test_handleNewLinkRegistration(t *testing.T) {
 			},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			storage.Storage = storage.FileStorage{FilePath: "test/test.txt"}
+
 			request := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(tt.link)))
 			w := httptest.NewRecorder()
 
-			handler.HandleNewLinkRegistration(w, request)
+			fn := handler.HandleNewLinkRegistration()
+			fn.ServeHTTP(w, request)
 
 			result := w.Result()
 			assert.Equal(t, tt.want.code, result.StatusCode)
@@ -119,6 +124,7 @@ func Test_handleExistingLinkRequest(t *testing.T) {
 			},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if len(tt.id) != 0 && len(tt.want.location) != 0 {
@@ -127,7 +133,8 @@ func Test_handleExistingLinkRequest(t *testing.T) {
 			}
 			request := httptest.NewRequest(http.MethodGet, "/"+tt.id, nil)
 			w := httptest.NewRecorder()
-			handler.HandleExistingLinkRequest(w, request)
+			fn := handler.HandleExistingLinkRequest()
+			fn.ServeHTTP(w, request)
 
 			result := w.Result()
 			defer result.Body.Close()
@@ -156,7 +163,7 @@ func Test_handleShortenRequest(t *testing.T) {
 			"Content-Type",
 			"application/json",
 			want{
-				200,
+				201,
 				`{"result":"http://localhost:8080/6bdb5b0e"}`,
 			},
 		},
@@ -178,7 +185,8 @@ func Test_handleShortenRequest(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, "/api/shorten", bodyReader)
 			request.Header.Add(tt.headerKey, tt.headerValue)
 			w := httptest.NewRecorder()
-			handler.HandleShortenRequest(w, request)
+			fn := handler.HandleShortenRequest()
+			fn.ServeHTTP(w, request)
 
 			result := w.Result()
 			defer result.Body.Close()
@@ -188,6 +196,152 @@ func Test_handleShortenRequest(t *testing.T) {
 
 			resultBodyAsString := string(resultBody)
 			assert.Equal(t, tt.want.jsonResponseAsString, resultBodyAsString)
+		})
+	}
+}
+
+func Test_CompressedPayloadHandlingInShorten(t *testing.T) {
+	type want struct {
+		code                 int
+		jsonResponseAsString string
+	}
+	tests := []struct {
+		name                string
+		requestBodyAsString string
+		requestLink         string
+		headers             map[string]string
+		want                want
+	}{
+		{
+			"Successful case #1",
+			`{"url":"https://practicum.yandex.ru"}`,
+			"https://practicum.yandex.ru",
+			map[string]string{
+				"Content-Encoding": "gzip",
+				"Accept-Encoding":  "gzip",
+			},
+			want{
+				201,
+				`{"result":"http://localhost:8080/6bdb5b0e"}`,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			zw := gzip.NewWriter(&buf)
+			_, _ = zw.Write([]byte(tt.requestBodyAsString))
+			_ = zw.Close()
+
+			reader := bytes.NewReader(buf.Bytes())
+			request := httptest.NewRequest(http.MethodPost, "/api/shorten", reader)
+			for key, value := range tt.headers {
+				request.Header.Add(key, value)
+			}
+			w := httptest.NewRecorder()
+			fn := handler.HandleShortenRequest()
+
+			fn.ServeHTTP(w, request)
+
+			result := w.Result()
+			defer result.Body.Close()
+			resultBody, err := io.ReadAll(result.Body)
+			assert.Nil(t, err)
+
+			assert.Equal(t, tt.want.code, result.StatusCode)
+
+			gzipReader, gunzipErr := gzip.NewReader(bytes.NewBuffer(resultBody))
+			if gunzipErr != nil {
+				assert.Fail(t, "failed to gunzip a response")
+			}
+
+			var gunzipedBuffer bytes.Buffer
+			_, gErr := gunzipedBuffer.ReadFrom(gzipReader)
+			if gErr != nil {
+				assert.Fail(t, "couldn't read response")
+			}
+
+			resData := gunzipedBuffer.Bytes()
+			assert.Equal(t, tt.want.jsonResponseAsString, string(resData))
+		})
+	}
+}
+
+func Test_CompressedPayloadHandlingInLinkRegistration(t *testing.T) {
+	type want struct {
+		code                 int
+		jsonResponseAsString string
+	}
+	tests := []struct {
+		name        string
+		requestLink string
+		headers     map[string]string
+		want        want
+	}{
+		{
+			"Successful case #1",
+			"https://practicum.yandex.ru",
+			map[string]string{
+				"Content-Encoding": "gzip",
+				"Accept-Encoding":  "gzip",
+			},
+			want{
+				201,
+				`http://localhost:8080/6bdb5b0e`,
+			},
+		},
+		{
+			"Unsuccessful case #1",
+			"some_long_text",
+			map[string]string{
+				"Content-Encoding": "gzip",
+				"Accept-Encoding":  "gzip",
+			},
+			want{
+				400,
+				``,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			zw := gzip.NewWriter(&buf)
+			_, _ = zw.Write([]byte(tt.requestLink))
+			_ = zw.Close()
+
+			reader := bytes.NewReader(buf.Bytes())
+			request := httptest.NewRequest(http.MethodPost, "/", reader)
+			for key, value := range tt.headers {
+				request.Header.Add(key, value)
+			}
+			w := httptest.NewRecorder()
+			fn := handler.HandleNewLinkRegistration()
+
+			fn.ServeHTTP(w, request)
+
+			result := w.Result()
+			defer result.Body.Close()
+			resultBody, err := io.ReadAll(result.Body)
+			assert.Nil(t, err)
+
+			assert.Equal(t, tt.want.code, result.StatusCode)
+
+			gzipReader, gunzipErr := gzip.NewReader(bytes.NewBuffer(resultBody))
+			if gunzipErr != nil {
+				assert.Fail(t, "failed to gunzip a response")
+			}
+
+			var gunzipedBuffer bytes.Buffer
+			_, gErr := gunzipedBuffer.ReadFrom(gzipReader)
+			if gErr != nil {
+				assert.Fail(t, "couldn't read response")
+			}
+
+			resData := gunzipedBuffer.Bytes()
+			assert.Equal(t, tt.want.jsonResponseAsString, string(resData))
 		})
 	}
 }

@@ -10,35 +10,49 @@ import (
 	"github.com/YuryBogdanov/link-shortener/internal/storage"
 )
 
-func HandleShortenRequest(w http.ResponseWriter, r *http.Request) {
-	if err := validateRequest(r); err != nil {
-		handleError(w)
-		return
-	}
+const (
+	headerKeyContentType     = "Content-Type"
+	headerKeyContentEncoding = "Content-Encoding"
 
-	var reqModel model.ShortenRequest
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		handleError(w)
-		return
-	}
-	defer r.Body.Close()
+	jsonContentType          = "application/json"
+	validContentEncodingType = "gzip"
+	emptyHeaderValue         = ""
+)
 
-	unmarshalErr := json.Unmarshal(body, &reqModel)
-	if unmarshalErr != nil {
-		handleError(w)
-		return
-	}
+func HandleShortenRequest() http.HandlerFunc {
+	return withCompression(withLogging(handleShortenRequest()))
+}
 
-	link, err := storage.MakeAndStoreShortURL(reqModel.URL)
-	if err != nil {
-		handleError(w)
-		return
-	}
+func handleShortenRequest() http.HandlerFunc {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		if err := validateRequest(r); err != nil {
+			handleError(w)
+			return
+		}
+		var reqModel model.ShortenRequest
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			handleError(w)
+			return
+		}
+		defer r.Body.Close()
 
-	response := prepareResponse(w, link)
-	w.Header().Add("Content-Type", "application/json")
-	w.Write(response)
+		unmarshalErr := json.Unmarshal(body, &reqModel)
+		if unmarshalErr != nil {
+			handleError(w)
+			return
+		}
+		link, err := storage.MakeAndStoreShortURL(reqModel.URL)
+		if err != nil {
+			handleError(w)
+			return
+		}
+		response := prepareResponse(w, link)
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		w.Write(response)
+	}
+	return fn
 }
 
 func prepareResponse(w http.ResponseWriter, link string) []byte {
@@ -56,10 +70,32 @@ func validateRequest(r *http.Request) error {
 }
 
 func validateHeaders(headers http.Header) error {
-	contentType := headers.Get("Content-Type")
-	if contentType == "application/json" {
+	contentType := headers.Get(headerKeyContentType)
+	contentEncoding := headers.Get(headerKeyContentEncoding)
+
+	var ok bool
+	switch contentType {
+	case jsonContentType:
+		ok = true
+
+	default:
+		ok = false
+	}
+
+	switch contentEncoding {
+	case emptyHeaderValue:
+		break
+
+	case validContentEncodingType:
+		ok = true
+
+	default:
+		ok = false
+	}
+
+	if ok {
 		return nil
 	} else {
-		return errors.New("wrong content type")
+		return errors.New("invalid headers")
 	}
 }
